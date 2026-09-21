@@ -123,7 +123,7 @@ $('playerLabel').textContent = state.name || 'Khách chơi';
 document.querySelector(`input[name="role"][value="${role}"]`).checked = true;
 $('roomChooser').hidden = role === 'host';
 $('hostRoomChooser').hidden = role !== 'host';
-if (!sessionStorage.getItem(`bingo-joined-${roomCode}`)) $('joinDialog').showModal();
+if (!new URLSearchParams(location.search).get('joined')) $('joinDialog').showModal();
 $('roomInput').value = '';
 $('joinDialog').addEventListener('close', async () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } role = document.querySelector('input[name="role"]:checked')?.value || 'player'; const requestedRoom = $('roomInput').value.trim().toUpperCase(); const isNewHost=new URLSearchParams(location.search).get('new')==='1'; if (role === 'host' && !isNewHost) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=BINGO-${Math.random().toString(36).slice(2, 8).toUpperCase()}&host=1&new=1`); return; } if (role==='player' && !requestedRoom) { $('joinDialog').showModal(); return toast('Hãy chọn một phòng đang mở.', 'warn'); } if (role==='player' && requestedRoom !== roomCode) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=${requestedRoom}`); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; $('hostPanel').hidden = role!=='host'; if(role==='host') $('inviteLink').value=`${location.origin}${location.pathname}?room=${roomCode}`; joinRoom(); });
 $('soundToggle').textContent = `${state.sound ? '🔔 Âm thanh: BẬT' : '🔕 Âm thanh: TẮT'}`;
@@ -148,7 +148,7 @@ document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('c
 initRemote(); initChat(); renderGame(); startHostRound(); loadRooms(); loadPeople();
 // Role-specific presentation after the welcome form is completed.
 $('joinDialog').addEventListener('close', () => { if (role==='host') { document.body.classList.add('is-host'); $('hostNumbers').hidden=false; $('hostPanel').hidden=false; } else { document.body.classList.remove('is-host'); $('hostNumbers').hidden=true; $('hostPanel').hidden=true; } });
-$('joinDialog').addEventListener('close', () => { if (state.name) sessionStorage.setItem(`bingo-joined-${roomCode}`,'1'); });
+$('joinDialog').addEventListener('close', () => { if (state.name && !new URLSearchParams(location.search).get('joined')) { const url=new URL(location.href); url.searchParams.set('joined','1'); history.replaceState({},'',url); } });
 document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',()=>{ const host=r.value==='host'&&r.checked; $('hostRoomChooser').hidden=!host; }));
 function setJoinLabel(){ document.querySelector('#joinDialog .bingo-btn span').textContent=document.querySelector('input[name="role"]:checked')?.value==='host'?'TẠO PHÒNG':'VÀO VÁN CHƠI'; }
 document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',setJoinLabel)); setJoinLabel();
