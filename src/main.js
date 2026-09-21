@@ -115,7 +115,7 @@ $('copyRoom').addEventListener('click', async () => { await navigator.clipboard.
 document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); callNext(); } });
 if (!state.card) makeCard();
 $('playerLabel').textContent = state.name || 'Khách chơi';
-if (!state.name) $('joinDialog').showModal();
+$('joinDialog').showModal();
 $('joinDialog').addEventListener('close', () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } role = document.querySelector('input[name="role"]:checked')?.value || 'player'; if (role === 'host' && !new URLSearchParams(location.search).has('room')) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=BINGO-${Math.random().toString(36).slice(2, 8).toUpperCase()}&host=1`); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; $('hostPanel').hidden = role !== 'host'; if (role === 'host') $('inviteLink').value = `${location.origin}${location.pathname}?room=${roomCode}`; });
 $('soundToggle').textContent = `${state.sound ? '🔔 Âm thanh: BẬT' : '🔕 Âm thanh: TẮT'}`;
 async function initChat() {
