@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const $ = (id) => document.getElementById(id);
 const roomCode = (new URLSearchParams(location.search).get('room') || 'DEMO-2026').toUpperCase().slice(0, 24);
+let role = new URLSearchParams(location.search).get('host') === '1' ? 'host' : 'player';
 const state = {
   card: JSON.parse(localStorage.getItem(`bingo-card-${roomCode}`) || 'null'),
   marked: new Set(JSON.parse(localStorage.getItem(`bingo-marked-${roomCode}`) || '[]')),
@@ -46,7 +47,7 @@ function renderBoard() {
 function mark(n) {
   if (n === 0) return;
   if (!state.called.includes(n)) return toast(`Số ${n} chưa được gọi!`, 'warn');
-  state.marked.has(n) ? state.marked.delete(n) : state.marked.add(n);
+  state.marked.has(n) ? state.marked.delete(n) : (state.marked.add(n), beep());
   saveCard(); renderBoard();
 }
 function renderGame() {
@@ -73,6 +74,7 @@ function startReminder() {
   reminderTimer = setTimeout(() => { if (!state.marked.has(state.current)) { beep(); toast(`Bạn chưa đánh dấu số ${state.current}!`, 'warn'); } }, 6500);
 }
 async function callNext() {
+  if (role !== 'host') return;
   const remaining = Array.from({ length: 75 }, (_, i) => i + 1).filter(n => !state.called.includes(n));
   if (!remaining.length) return toast('Đã gọi hết 75 số.');
   const number = remaining[Math.floor(Math.random() * remaining.length)];
@@ -86,17 +88,17 @@ async function sync(next) {
   } else localStorage.setItem(demoKey, JSON.stringify(next));
   applyRoom(next);
 }
-function applyRoom(room) { state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); }
+function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current && state.current !== old && state.sound && 'speechSynthesis' in window) { speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(`Số ${state.current}`); voice.lang = 'vi-VN'; voice.rate = .82; speechSynthesis.speak(voice); } }
 async function claim() {
   if (!linesComplete()) return;
   if (state.winners.some(w => w.player_name === state.name)) return toast('Bạn đã có tên trong bảng về đích.');
-  const winner = { player_name: state.name, claimed_at: new Date().toISOString(), room_code: roomCode, round: state.round };
+  const winner = { player_name: state.name, claimed_at: new Date().toISOString(), room_code: roomCode, round: state.round, completed_lines: linesComplete() };
   if (supabase) { const { error } = await supabase.from('winners').insert(winner); if (error) return toast('Không thể xác nhận: ' + error.message, 'warn'); }
   else { state.winners.push(winner); localStorage.setItem(demoKey, JSON.stringify({ called: state.called, current: state.current, winners: state.winners, round: state.round })); }
   if (supabase) state.winners = [...state.winners, winner].sort((a,b) => new Date(a.claimed_at) - new Date(b.claimed_at));
-  renderWinners(); beep(); toast(`Chúc mừng ${state.name}! Bạn đứng thứ ${state.winners.findIndex(w => w.player_name === state.name) + 1}.`);
+  renderWinners(); beep(); if (supabase) await supabase.from('chat_messages').insert({ room_code: roomCode, player_name: 'BINGO FIRST', message: `🎉 ${state.name} đã BINGO với ${winner.completed_lines} hàng hoàn thành!`, kind: 'system', round: state.round }); toast(`Chúc mừng ${state.name}! Bạn đứng thứ ${state.winners.findIndex(w => w.player_name === state.name) + 1}.`);
 }
-async function reset() { if (!confirm('Làm mới ván và xoá bảng về đích?')) return; const next = { called: [], current: null, winners: [], round: state.round + 1 }; if (supabase) { await supabase.from('winners').delete().eq('room_code', roomCode); await sync(next); } else { localStorage.setItem(demoKey, JSON.stringify(next)); applyRoom(next); } toast('Đã bắt đầu ván mới.'); }
+async function reset() { if (role !== 'host' || !confirm('Làm mới ván và xoá bảng về đích?')) return; const next = { called: [], current: null, winners: [], round: state.round + 1 }; if (supabase) { await supabase.from('winners').delete().eq('room_code', roomCode); await sync(next); } else { localStorage.setItem(demoKey, JSON.stringify(next)); applyRoom(next); } toast('Đã bắt đầu ván mới.'); }
 async function initRemote() {
   if (!supabase) { const saved = JSON.parse(localStorage.getItem(demoKey) || 'null'); if (saved) { applyRoom(saved); state.winners = saved.winners || []; } window.addEventListener('storage', e => { if (e.key === demoKey && e.newValue) { const update = JSON.parse(e.newValue); state.winners = update.winners || []; applyRoom(update); } }); return; }
   let { data: room } = await supabase.from('rooms').select('*').eq('code', roomCode).maybeSingle();
@@ -114,6 +116,17 @@ document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.t
 if (!state.card) makeCard();
 $('playerLabel').textContent = state.name || 'Khách chơi';
 if (!state.name) $('joinDialog').showModal();
-$('joinDialog').addEventListener('close', () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; });
+$('joinDialog').addEventListener('close', () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } role = document.querySelector('input[name="role"]:checked')?.value || 'player'; if (role === 'host' && !new URLSearchParams(location.search).has('room')) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=BINGO-${Math.random().toString(36).slice(2, 8).toUpperCase()}&host=1`); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; $('hostPanel').hidden = role !== 'host'; if (role === 'host') $('inviteLink').value = `${location.origin}${location.pathname}?room=${roomCode}`; });
 $('soundToggle').textContent = `${state.sound ? '🔔 Âm thanh: BẬT' : '🔕 Âm thanh: TẮT'}`;
-initRemote(); renderGame();
+async function initChat() {
+  if (!supabase) return;
+  const { data } = await supabase.from('chat_messages').select('*').eq('room_code', roomCode).eq('round', state.round).order('created_at').limit(60);
+  renderChat(data || []);
+  supabase.channel(`chat-${roomCode}`).on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages', filter:`room_code=eq.${roomCode}` }, payload => { if (payload.new.round === state.round) appendChat(payload.new); }).subscribe();
+}
+function appendChat(message) { const box = $('chatMessages'); box.insertAdjacentHTML('beforeend', `<article class="chat-message ${message.kind === 'system' ? 'system' : ''}"><b>${message.kind === 'system' ? 'BINGO FIRST' : esc(message.player_name)}</b><p>${esc(message.message)}</p></article>`); box.scrollTop = box.scrollHeight; }
+function renderChat(messages) { $('chatMessages').innerHTML = ''; messages.forEach(appendChat); }
+$('chatForm').addEventListener('submit', async e => { e.preventDefault(); const text = $('chatInput').value.trim(); if (!text || !state.name) return; $('chatInput').value = ''; const payload = { room_code: roomCode, player_name: state.name, message: text.slice(0,240), round: state.round }; if (supabase) await supabase.from('chat_messages').insert(payload); else appendChat(payload); });
+$('copyInvite').addEventListener('click', async () => { await navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${roomCode}`); toast('Đã sao chép link mời người chơi.'); });
+if (role === 'host') { $('hostPanel').hidden = false; $('inviteLink').value = `${location.origin}${location.pathname}?room=${roomCode}`; } else $('hostPanel').hidden = true;
+initRemote(); initChat(); renderGame();

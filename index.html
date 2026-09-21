@@ -52,11 +52,12 @@
             <p class="empty-winners" id="emptyWinners">Chưa có ai về đích. Bạn có thể là người đầu tiên!</p>
           </section>
           <section class="card-panel caller-panel" id="hostPanel">
-            <div><p class="section-kicker">BẢNG ĐIỀU KHIỂN</p><h2>Người dẫn</h2></div>
+            <div><p class="section-kicker">BẢNG ĐIỀU KHIỂN</p><h2>Người dẫn</h2><p class="invite-copy">Mời người chơi vào phòng của bạn.</p><div class="invite-row"><input id="inviteLink" readonly aria-label="Link mời người chơi" /><button id="copyInvite" class="text-btn">Sao chép link</button></div></div>
             <div class="caller-controls"><button class="call-btn" id="callNumber">Gọi số tiếp theo <kbd>SPACE</kbd></button><button class="reset-btn" id="resetGame">Làm mới ván</button></div>
           </section>
         </aside>
       </section>
+      <section class="card-panel chat-panel"><div class="panel-heading"><div><p class="section-kicker">TÁM CHUYỆN CÙNG PHÒNG</p><h2>Chat trực tiếp</h2></div><span class="live-dot">LIVE</span></div><div id="chatMessages" class="chat-messages" aria-live="polite"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="240" placeholder="Nói gì đó vui vui…" autocomplete="off" /><button class="call-btn" type="submit">Gửi</button></form></section>
 
       <section class="bottom-grid">
         <section class="history-panel"><div class="history-head"><p class="section-kicker">LỊCH SỬ SỐ ĐÃ GỌI</p><span id="callCount">0 / 75</span></div><div id="calledHistory" class="called-history"></div></section>
@@ -64,7 +65,7 @@
       </section>
     </main>
 
-    <dialog id="joinDialog"><form method="dialog" class="join-form"><span class="brand-mark">B</span><p class="section-kicker">CHÀO MỪNG ĐẾN BINGO FIRST</p><h2>Hôm nay bạn tên gì?</h2><label for="playerName">Tên hiển thị</label><input id="playerName" maxlength="24" placeholder="Ví dụ: Minh Anh" autocomplete="name" required /><button class="bingo-btn" value="join"><span>VÀO VÁN CHƠI</span></button><p class="join-note">Thẻ số của bạn được tạo ngẫu nhiên và chỉ hiển thị cho bạn.</p></form></dialog>
+    <dialog id="joinDialog"><form method="dialog" class="join-form"><span class="brand-mark">B</span><p class="section-kicker">CHÀO MỪNG ĐẾN BINGO FIRST</p><h2>Bạn tham gia với vai trò nào?</h2><div class="role-picker"><label class="role-option"><input type="radio" name="role" value="player" checked /><span>🎮</span><b>Người chơi</b><small>Nhận thẻ và đua Bingo</small></label><label class="role-option"><input type="radio" name="role" value="host" /><span>🎙️</span><b>Người dẫn</b><small>Gọi số và mời mọi người</small></label></div><label for="playerName">Tên hiển thị</label><input id="playerName" maxlength="24" placeholder="Ví dụ: Minh Anh" autocomplete="name" required /><button class="bingo-btn" value="join"><span>VÀO VÁN CHƠI</span></button><p class="join-note">Người dẫn sẽ nhận link mời riêng.</p></form></dialog>
     <div id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
