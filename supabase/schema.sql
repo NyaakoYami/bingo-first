@@ -28,6 +28,7 @@ create policy "public winners add" on winners for insert with check (true);
 create policy "public winners reset" on winners for delete using (true);
 create policy "public chat read" on chat_messages for select using (true);
 create policy "public chat add" on chat_messages for insert with check (true);
+create policy "public chat reset" on chat_messages for delete using (true);
 
 insert into rooms (code) values ('DEMO-2026') on conflict (code) do nothing;
 
