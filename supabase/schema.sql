@@ -16,10 +16,12 @@ create table if not exists winners (
   completed_lines integer not null default 1
 );
 create table if not exists chat_messages (id bigint generated always as identity primary key, room_code text not null references rooms(code) on delete cascade, player_name text not null, message text not null check (char_length(message) between 1 and 240), kind text not null default 'chat', round integer not null default 1, created_at timestamptz not null default now());
+create table if not exists participants (id uuid primary key default gen_random_uuid(), room_code text not null references rooms(code) on delete cascade, session_id text not null unique, player_name text not null, role text not null default 'player', last_seen timestamptz not null default now());
 
 alter table rooms enable row level security;
 alter table winners enable row level security;
 alter table chat_messages enable row level security;
+alter table participants enable row level security;
 create policy "public room create" on rooms for insert with check (true);
 create policy "public room read" on rooms for select using (true);
 create policy "public room update" on rooms for update using (true) with check (true);
@@ -29,6 +31,9 @@ create policy "public winners reset" on winners for delete using (true);
 create policy "public chat read" on chat_messages for select using (true);
 create policy "public chat add" on chat_messages for insert with check (true);
 create policy "public chat reset" on chat_messages for delete using (true);
+create policy "public participants read" on participants for select using (true);
+create policy "public participants join" on participants for insert with check (true);
+create policy "public participants update" on participants for update using (true) with check (true);
 
 insert into rooms (code) values ('DEMO-2026') on conflict (code) do nothing;
 
