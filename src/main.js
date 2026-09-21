@@ -88,7 +88,8 @@ async function sync(next) {
   } else localStorage.setItem(demoKey, JSON.stringify(next));
   applyRoom(next);
 }
-function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current && state.current !== old && state.sound && 'speechSynthesis' in window) { speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(`Số ${state.current}`); voice.lang = 'vi-VN'; voice.rate = .82; speechSynthesis.speak(voice); } }
+function vietNumber(n) { const ones=['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín']; if(n<10)return ones[n]; if(n===10)return 'mười'; const tens=Math.floor(n/10), unit=n%10; return `${ones[tens]} mươi${unit ? ` ${unit===1?'mốt':unit===5?'lăm':ones[unit]}`:''}`; }
+function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current && state.current !== old && state.sound && 'speechSynthesis' in window) { speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(`Số ${vietNumber(state.current)}`); voice.lang = 'vi-VN'; voice.rate = .82; speechSynthesis.speak(voice); } }
 async function claim() {
   if (!linesComplete()) return;
   if (state.winners.some(w => w.player_name === state.name)) return toast('Bạn đã có tên trong bảng về đích.');
@@ -116,7 +117,8 @@ document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.t
 if (!state.card) makeCard();
 $('playerLabel').textContent = state.name || 'Khách chơi';
 $('joinDialog').showModal();
-$('joinDialog').addEventListener('close', () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } role = document.querySelector('input[name="role"]:checked')?.value || 'player'; if (role === 'host' && !new URLSearchParams(location.search).has('room')) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=BINGO-${Math.random().toString(36).slice(2, 8).toUpperCase()}&host=1`); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; $('hostPanel').hidden = role !== 'host'; if (role === 'host') $('inviteLink').value = `${location.origin}${location.pathname}?room=${roomCode}`; });
+$('roomInput').value = roomCode;
+$('joinDialog').addEventListener('close', async () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } role = document.querySelector('input[name="role"]:checked')?.value || 'player'; const requestedRoom = $('roomInput').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24); if (role === 'host') { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=BINGO-${Math.random().toString(36).slice(2, 8).toUpperCase()}&host=1&new=1`); return; } if (requestedRoom && requestedRoom !== roomCode) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=${requestedRoom}`); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; $('hostPanel').hidden = true; });
 $('soundToggle').textContent = `${state.sound ? '🔔 Âm thanh: BẬT' : '🔕 Âm thanh: TẮT'}`;
 async function initChat() {
   if (!supabase) return;
@@ -129,4 +131,5 @@ function renderChat(messages) { $('chatMessages').innerHTML = ''; messages.forEa
 $('chatForm').addEventListener('submit', async e => { e.preventDefault(); const text = $('chatInput').value.trim(); if (!text || !state.name) return; $('chatInput').value = ''; const payload = { room_code: roomCode, player_name: state.name, message: text.slice(0,240), round: state.round }; if (supabase) await supabase.from('chat_messages').insert(payload); else appendChat(payload); });
 $('copyInvite').addEventListener('click', async () => { await navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${roomCode}`); toast('Đã sao chép link mời người chơi.'); });
 if (role === 'host') { $('hostPanel').hidden = false; $('inviteLink').value = `${location.origin}${location.pathname}?room=${roomCode}`; } else $('hostPanel').hidden = true;
-initRemote(); initChat(); renderGame();
+async function startHostRound() { if (role !== 'host' || new URLSearchParams(location.search).get('new') !== '1') return; await new Promise(resolve => setTimeout(resolve, 350)); if (supabase) { await supabase.from('winners').delete().eq('room_code', roomCode); await supabase.from('chat_messages').delete().eq('room_code', roomCode); await supabase.from('rooms').update({current_number:null,called_numbers:[],round:state.round + 1,updated_at:new Date().toISOString()}).eq('code',roomCode); } else { localStorage.removeItem(demoKey); } toast('Ván mới đã sẵn sàng. Hãy gửi link mời người chơi!','success'); }
+initRemote(); initChat(); renderGame(); startHostRound();
