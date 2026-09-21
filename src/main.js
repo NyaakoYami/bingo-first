@@ -93,7 +93,7 @@ async function sync(next) {
   applyRoom(next);
 }
 function vietNumber(n) { const ones=['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín']; if(n<10)return ones[n]; if(n===10)return 'mười'; const tens=Math.floor(n/10), unit=n%10; return `${ones[tens]} mươi${unit ? ` ${unit===1?'mốt':unit===5?'lăm':ones[unit]}`:''}`; }
-function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current !== null && state.current !== old && state.sound && 'speechSynthesis' in window) { speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(`Số ${vietNumber(state.current)}`); voice.lang = 'vi-VN'; voice.voice = speechSynthesis.getVoices().find(v=>/google.*vietnamese/i.test(v.name)||(/vi/i.test(v.lang)&&/google/i.test(v.name))) || speechSynthesis.getVoices().find(v=>/^vi/i.test(v.lang)) || null; voice.rate = .82; speechSynthesis.speak(voice); } }
+function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current !== null && state.current !== old) { beep(); $('latestNumber').classList.remove('number-pop'); requestAnimationFrame(()=>$('latestNumber').classList.add('number-pop')); } }
 async function claim() {
   if (!linesComplete()) return;
   if (state.winners.some(w => w.player_name === state.name)) return toast('Bạn đã có tên trong bảng về đích.');

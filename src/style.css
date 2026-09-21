@@ -3,3 +3,4 @@
 .room-list{max-height:145px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin:5px 0 14px}.room-list p{font-size:10px;color:var(--muted);padding:8px}.room-choice{width:100%;border:0;border-bottom:1px solid var(--line);background:white;padding:9px;text-align:left;cursor:pointer}.room-choice:last-child{border:0}.room-choice.selected{background:#fff0e8}.room-choice b{display:block;font-size:11px}.room-choice span{font-size:9px;color:var(--muted)}
 .host-numbers{margin-top:20px}.is-host .board-panel{display:none}
 .people-panel{margin-top:20px}.people-list{display:flex;gap:10px;flex-wrap:wrap}.person{display:flex;align-items:center;gap:7px;font-size:11px}.person b,.person small{display:block}.person small{font-size:9px;color:var(--muted)}
+.number-pop{animation:numberpop .5s cubic-bezier(.2,1.4,.4,1)}@keyframes numberpop{0%{transform:scale(.55);opacity:.2}60%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
