@@ -57,6 +57,7 @@
           </section>
         </aside>
       </section>
+      <section id="hostNumbers" class="card-panel host-numbers" hidden><div class="panel-heading"><div><p class="section-kicker">TOÀN BỘ SỐ ĐÃ GỌI</p><h2>Bảng người dẫn</h2></div><span id="hostCallCount">0 / 100</span></div><div id="hostCalledHistory" class="called-history"></div></section>
       <section class="card-panel chat-panel"><div class="panel-heading"><div><p class="section-kicker">TÁM CHUYỆN CÙNG PHÒNG</p><h2>Chat trực tiếp</h2></div><span class="live-dot">LIVE</span></div><div id="chatMessages" class="chat-messages" aria-live="polite"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="240" placeholder="Nói gì đó vui vui…" autocomplete="off" /><button class="call-btn" type="submit">Gửi</button></form></section>
 
       <section class="bottom-grid">
@@ -65,7 +66,7 @@
       </section>
     </main>
 
-    <dialog id="joinDialog"><form method="dialog" class="join-form"><span class="brand-mark">B</span><p class="section-kicker">CHÀO MỪNG ĐẾN BINGO FIRST</p><h2>Bạn tham gia với vai trò nào?</h2><div class="role-picker"><label class="role-option"><input type="radio" name="role" value="player" checked /><span>🎮</span><b>Người chơi</b><small>Chọn phòng và chờ ván mới</small></label><label class="role-option"><input type="radio" name="role" value="host" /><span>🎙️</span><b>Người dẫn</b><small>Tạo ván mới, gọi số</small></label></div><div id="roomChooser"><label>Phòng đang mở</label><div id="roomList" class="room-list"><p>Đang tải danh sách phòng…</p></div><input id="roomInput" type="hidden" /></div><label for="playerName">Tên hiển thị</label><input id="playerName" maxlength="24" placeholder="Ví dụ: Minh Anh" autocomplete="name" required /><button class="bingo-btn" value="join"><span>VÀO VÁN CHƠI</span></button><p class="join-note">Người dẫn tạo một ván mới hoàn toàn; người chơi chỉ chọn phòng có sẵn.</p></form></dialog>
+    <dialog id="joinDialog"><form method="dialog" class="join-form"><span class="brand-mark">B</span><p class="section-kicker">CHÀO MỪNG ĐẾN BINGO FIRST</p><h2>Bạn tham gia với vai trò nào?</h2><div class="role-picker"><label class="role-option"><input type="radio" name="role" value="player" checked /><span>🎮</span><b>Người chơi</b><small>Chọn phòng và chờ ván mới</small></label><label class="role-option"><input type="radio" name="role" value="host" /><span>🎙️</span><b>Người dẫn</b><small>Tạo ván mới, gọi số</small></label></div><div id="roomChooser"><label>Phòng đang mở</label><div id="roomList" class="room-list"><p>Đang tải danh sách phòng…</p></div><input id="roomInput" type="hidden" /></div><div id="hostRoomChooser" hidden><label for="hostRoomName">Tên phòng mới</label><input id="hostRoomName" maxlength="24" placeholder="Ví dụ: TEAM-SALES" autocomplete="off" /></div><label for="playerName">Tên hiển thị</label><input id="playerName" maxlength="24" placeholder="Ví dụ: Minh Anh" autocomplete="name" required /><button class="bingo-btn" value="join"><span>VÀO VÁN CHƠI</span></button><p class="join-note">Người dẫn tạo một ván mới hoàn toàn; người chơi chỉ chọn phòng có sẵn.</p></form></dialog>
     <div id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

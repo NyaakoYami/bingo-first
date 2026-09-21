@@ -21,10 +21,10 @@ $('roomCode').textContent = roomCode;
 document.title = `Bingo First — ${roomCode}`;
 
 function makeCard() {
-  const pool = Array.from({ length: 75 }, (_, i) => i + 1).sort(() => Math.random() - .5);
-  state.card = pool.slice(0, 25);
-  state.card[12] = 0;
-  state.marked = new Set([0]);
+  state.card = Array(25).fill(0);
+  for (let col=0; col<5; col++) { const pool=Array.from({length:20},(_,i)=>col*20+i).sort(()=>Math.random()-.5); for(let row=0;row<5;row++) state.card[row*5+col]=pool[row]; }
+  state.card[12] = 100;
+  state.marked = new Set([100]);
   saveCard(); renderBoard();
 }
 function saveCard() {
@@ -37,7 +37,7 @@ function linesComplete() {
 }
 function renderBoard() {
   if (!state.card) return;
-  $('bingoGrid').innerHTML = state.card.map((n, i) => `<button class="cell ${state.marked.has(n) ? 'marked' : ''} ${state.called.includes(n) ? 'called' : ''} ${n === 0 ? 'free' : ''}" data-number="${n}" aria-label="${n === 0 ? 'Ô miễn phí' : `Số ${n}`}">${n === 0 ? '<span>FREE</span>' : n}</button>`).join('');
+  $('bingoGrid').innerHTML = state.card.map((n, i) => `<button class="cell ${state.marked.has(n) ? 'marked' : ''} ${state.called.includes(n) ? 'called' : ''} ${n === 100 ? 'free' : ''}" data-number="${n}" aria-label="${n === 100 ? 'Ô miễn phí' : `Số ${n}`}">${n === 100 ? '<span>FREE</span>' : n}</button>`).join('');
   const complete = linesComplete();
   $('progressText').textContent = `${complete} / 5 hàng hoàn thành`;
   $('markedText').textContent = `${state.marked.size - 1} ô đã chọn`;
@@ -46,7 +46,7 @@ function renderBoard() {
   $('bingoGrid').querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', () => mark(Number(cell.dataset.number))));
 }
 function mark(n) {
-  if (n === 0) return;
+  if (n === 100) return;
   if (!state.called.includes(n)) return toast(`Số ${n} chưa được gọi!`, 'warn');
   state.marked.has(n) ? state.marked.delete(n) : (state.marked.add(n), beep());
   saveCard(); renderBoard();
@@ -54,8 +54,10 @@ function mark(n) {
 function renderGame() {
   $('latestNumber').textContent = state.current ?? '—';
   $('numberHint').textContent = state.current ? `Số ${state.current} vừa được gọi` : 'Chờ người dẫn gọi số';
-  $('callCount').textContent = `${state.called.length} / 75`;
+  $('callCount').textContent = `${state.called.length} / 100`;
+  $('hostCallCount').textContent = `${state.called.length} / 100`;
   $('calledHistory').innerHTML = state.called.length ? state.called.map(n => `<span class="history-number ${n === state.current ? 'recent' : ''}">${n}</span>`).join('') : '<span class="history-empty">Các số đã gọi sẽ xuất hiện tại đây</span>';
+  $('hostCalledHistory').innerHTML = $('calledHistory').innerHTML;
   renderBoard(); renderWinners();
 }
 function renderWinners() {
@@ -76,8 +78,8 @@ function startReminder() {
 }
 async function callNext() {
   if (role !== 'host') return;
-  const remaining = Array.from({ length: 75 }, (_, i) => i + 1).filter(n => !state.called.includes(n));
-  if (!remaining.length) return toast('Đã gọi hết 75 số.');
+  const remaining = Array.from({ length: 100 }, (_, i) => i).filter(n => !state.called.includes(n));
+  if (!remaining.length) return toast('Đã gọi hết 100 số.');
   const number = remaining[Math.floor(Math.random() * remaining.length)];
   const next = { called: [...state.called, number], current: number, winners: state.winners, round: state.round };
   await sync(next); toast(`Đã gọi số ${number}`);
@@ -90,7 +92,7 @@ async function sync(next) {
   applyRoom(next);
 }
 function vietNumber(n) { const ones=['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín']; if(n<10)return ones[n]; if(n===10)return 'mười'; const tens=Math.floor(n/10), unit=n%10; return `${ones[tens]} mươi${unit ? ` ${unit===1?'mốt':unit===5?'lăm':ones[unit]}`:''}`; }
-function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current && state.current !== old && state.sound && 'speechSynthesis' in window) { speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(`Số ${vietNumber(state.current)}`); voice.lang = 'vi-VN'; voice.rate = .82; speechSynthesis.speak(voice); } }
+function applyRoom(room) { const old = state.current; state.called = room.called || room.called_numbers || []; state.current = room.current ?? room.current_number ?? null; state.round = room.round || 1; renderGame(); startReminder(); if (state.current !== null && state.current !== old && state.sound && 'speechSynthesis' in window) { speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(`Số ${vietNumber(state.current)}`); voice.lang = 'vi-VN'; voice.voice = speechSynthesis.getVoices().find(v=>/google.*vietnamese/i.test(v.name)||(/vi/i.test(v.lang)&&/google/i.test(v.name))) || speechSynthesis.getVoices().find(v=>/^vi/i.test(v.lang)) || null; voice.rate = .82; speechSynthesis.speak(voice); } }
 async function claim() {
   if (!linesComplete()) return;
   if (state.winners.some(w => w.player_name === state.name)) return toast('Bạn đã có tên trong bảng về đích.');
@@ -138,3 +140,5 @@ async function joinRoom() { if (!supabase || !state.name) return; await supabase
 async function loadRooms() { if (!supabase) return; const cutoff=new Date(Date.now()-70000).toISOString(); const [{data:rooms},{data:people}]=await Promise.all([supabase.from('rooms').select('code,current_number,updated_at').order('updated_at',{ascending:false}).limit(30),supabase.from('participants').select('room_code,last_seen').gt('last_seen',cutoff)]); const counts=(people||[]).reduce((a,p)=>(a[p.room_code]=(a[p.room_code]||0)+1,a),{}); const box=$('roomList'); box.innerHTML=(rooms||[]).map(r=>`<button type="button" class="room-choice" data-room="${r.code}"><b>${r.code}</b><span>${counts[r.code]||0} người · ${r.current_number?'Đang diễn ra':'Đang chờ'}</span></button>`).join('')||'<p>Chưa có phòng nào. Hãy chờ Người dẫn tạo ván.</p>'; box.querySelectorAll('.room-choice').forEach(b=>b.addEventListener('click',()=>{ $('roomInput').value=b.dataset.room; box.querySelectorAll('.room-choice').forEach(x=>x.classList.toggle('selected',x===b)); })); }
 document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',()=>{ const player=r.value==='player'&&r.checked; $('roomChooser').hidden=!player; if(player) loadRooms(); }));
 initRemote(); initChat(); renderGame(); startHostRound(); loadRooms();
+// Role-specific presentation after the welcome form is completed.
+$('joinDialog').addEventListener('close', () => { if (role==='host') { $('hostNumbers').hidden=false; $('hostPanel').hidden=false; } else { $('hostNumbers').hidden=true; $('hostPanel').hidden=true; } });
