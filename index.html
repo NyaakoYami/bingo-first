@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111827" />
+    <title>Bingo First — Ai bingo trước?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="grain"></div>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="#"><span class="brand-mark">B</span><span>BINGO <em>FIRST</em></span></a>
+        <div class="room-code">PHÒNG <strong id="roomCode">DEMO-2026</strong><button id="copyRoom" aria-label="Sao chép mã phòng">⧉</button></div>
+        <button class="ghost-btn" id="soundToggle" aria-pressed="true">🔔 Âm thanh: BẬT</button>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow"><span></span> PHÒNG ĐANG DIỄN RA</p>
+          <h1>Nghe số. Đánh dấu.<br /><i>Về đích đầu tiên.</i></h1>
+          <p class="intro">Bingo theo nhịp gọi số — người hoàn thành và bấm xác nhận trước sẽ đứng đầu bảng vinh danh.</p>
+        </div>
+        <div class="number-stage" aria-live="polite">
+          <span class="called-label">SỐ VỪA GỌI</span>
+          <div class="latest-number" id="latestNumber">—</div>
+          <p id="numberHint">Chờ người dẫn gọi số</p>
+          <div class="pulse"></div>
+        </div>
+      </section>
+
+      <section class="game-grid">
+        <section class="card-panel board-panel">
+          <div class="panel-heading">
+            <div><p class="section-kicker">THẺ CỦA BẠN</p><h2 id="playerLabel">Khách chơi</h2></div>
+            <button id="newCard" class="text-btn">↻ Thẻ mới</button>
+          </div>
+          <div class="bingo-grid" id="bingoGrid" aria-label="Bảng bingo"></div>
+          <div class="board-footer">
+            <div class="progress-wrap"><div class="progress-copy"><span id="progressText">0 / 5 hàng hoàn thành</span><span id="markedText">0 ô đã chọn</span></div><div class="progress-bar"><span id="progressBar"></span></div></div>
+            <button class="bingo-btn" id="claimBingo" disabled><span>BINGO!</span><small>HOÀN THÀNH & XÁC NHẬN</small></button>
+          </div>
+        </section>
+
+        <aside class="side-stack">
+          <section class="card-panel wins-panel">
+            <div class="panel-heading"><div><p class="section-kicker">BẢNG VỀ ĐÍCH</p><h2>Ai bingo trước?</h2></div><span class="live-dot">LIVE</span></div>
+            <ol class="winner-list" id="winnerList"></ol>
+            <p class="empty-winners" id="emptyWinners">Chưa có ai về đích. Bạn có thể là người đầu tiên!</p>
+          </section>
+          <section class="card-panel caller-panel" id="hostPanel">
+            <div><p class="section-kicker">BẢNG ĐIỀU KHIỂN</p><h2>Người dẫn</h2></div>
+            <div class="caller-controls"><button class="call-btn" id="callNumber">Gọi số tiếp theo <kbd>SPACE</kbd></button><button class="reset-btn" id="resetGame">Làm mới ván</button></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="bottom-grid">
+        <section class="history-panel"><div class="history-head"><p class="section-kicker">LỊCH SỬ SỐ ĐÃ GỌI</p><span id="callCount">0 / 75</span></div><div id="calledHistory" class="called-history"></div></section>
+        <section class="how-panel"><p class="section-kicker">CÁCH CHƠI</p><ol><li>Nghe số người dẫn gọi.</li><li>Chạm vào đúng ô trên thẻ của bạn.</li><li>Đủ một hàng, cột hoặc đường chéo? Bấm BINGO ngay.</li></ol><p class="alarm-note">🔔 Nếu có số vừa gọi còn chưa đánh dấu, chuông sẽ nhắc bạn.</p></section>
+      </section>
+    </main>
+
+    <dialog id="joinDialog"><form method="dialog" class="join-form"><span class="brand-mark">B</span><p class="section-kicker">CHÀO MỪNG ĐẾN BINGO FIRST</p><h2>Hôm nay bạn tên gì?</h2><label for="playerName">Tên hiển thị</label><input id="playerName" maxlength="24" placeholder="Ví dụ: Minh Anh" autocomplete="name" required /><button class="bingo-btn" value="join"><span>VÀO VÁN CHƠI</span></button><p class="join-note">Thẻ số của bạn được tạo ngẫu nhiên và chỉ hiển thị cho bạn.</p></form></dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
