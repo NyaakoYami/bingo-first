@@ -117,7 +117,7 @@ $('callNumber').addEventListener('click', callNext); $('claimBingo').addEventLis
 $('soundToggle').addEventListener('click', () => { state.sound = !state.sound; localStorage.setItem('bingo-sound', state.sound ? 'on' : 'off'); $('soundToggle').textContent = `${state.sound ? '🔔 Âm thanh: BẬT' : '🔕 Âm thanh: TẮT'}`; $('soundToggle').setAttribute('aria-pressed', state.sound); if(state.sound) beep(); });
 $('copyRoom').addEventListener('click', async () => { await navigator.clipboard.writeText(roomCode); toast('Đã sao chép mã phòng.'); });
 document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); callNext(); } });
-if (!state.card) makeCard();
+if (!state.card || state.card[12] === 0) makeCard();
 $('playerLabel').textContent = state.name || 'Khách chơi';
 document.querySelector(`input[name="role"][value="${role}"]`).checked = true;
 $('joinDialog').showModal();
@@ -141,4 +141,7 @@ async function loadRooms() { if (!supabase) return; const cutoff=new Date(Date.n
 document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',()=>{ const player=r.value==='player'&&r.checked; $('roomChooser').hidden=!player; if(player) loadRooms(); }));
 initRemote(); initChat(); renderGame(); startHostRound(); loadRooms();
 // Role-specific presentation after the welcome form is completed.
-$('joinDialog').addEventListener('close', () => { if (role==='host') { $('hostNumbers').hidden=false; $('hostPanel').hidden=false; } else { $('hostNumbers').hidden=true; $('hostPanel').hidden=true; } });
+$('joinDialog').addEventListener('close', () => { if (role==='host') { document.body.classList.add('is-host'); $('hostNumbers').hidden=false; $('hostPanel').hidden=false; } else { document.body.classList.remove('is-host'); $('hostNumbers').hidden=true; $('hostPanel').hidden=true; } });
+document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',()=>{ const host=r.value==='host'&&r.checked; $('hostRoomChooser').hidden=!host; }));
+// Capture runs before the original join handler, allowing a custom host room name.
+$('joinDialog').addEventListener('close', e => { const chosen=document.querySelector('input[name="role"]:checked')?.value; const isNew=new URLSearchParams(location.search).get('new')==='1'; if(chosen!=='host'||isNew) return; const name=$('playerName').value.trim(); if(!name) return; const label=$('hostRoomName').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24)||`BINGO-${Math.random().toString(36).slice(2,8).toUpperCase()}`; e.stopImmediatePropagation(); localStorage.setItem('bingo-name',name); location.replace(`${location.pathname}?room=${label}&host=1&new=1`); },true);
