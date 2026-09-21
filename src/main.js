@@ -120,6 +120,8 @@ document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.t
 if (!state.card || state.card[12] === 0) makeCard();
 $('playerLabel').textContent = state.name || 'Khách chơi';
 document.querySelector(`input[name="role"][value="${role}"]`).checked = true;
+$('roomChooser').hidden = role === 'host';
+$('hostRoomChooser').hidden = role !== 'host';
 $('joinDialog').showModal();
 $('roomInput').value = '';
 $('joinDialog').addEventListener('close', async () => { const name = $('playerName').value.trim(); if (!name) { $('joinDialog').showModal(); return; } role = document.querySelector('input[name="role"]:checked')?.value || 'player'; const requestedRoom = $('roomInput').value.trim().toUpperCase(); const isNewHost=new URLSearchParams(location.search).get('new')==='1'; if (role === 'host' && !isNewHost) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=BINGO-${Math.random().toString(36).slice(2, 8).toUpperCase()}&host=1&new=1`); return; } if (role==='player' && !requestedRoom) { $('joinDialog').showModal(); return toast('Hãy chọn một phòng đang mở.', 'warn'); } if (role==='player' && requestedRoom !== roomCode) { localStorage.setItem('bingo-name', name); location.replace(`${location.pathname}?room=${requestedRoom}`); return; } state.name = name; localStorage.setItem('bingo-name', name); $('playerLabel').textContent = name; $('hostPanel').hidden = role!=='host'; if(role==='host') $('inviteLink').value=`${location.origin}${location.pathname}?room=${roomCode}`; joinRoom(); });
