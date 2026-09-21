@@ -50,6 +50,7 @@ function mark(n) {
   if (!state.called.includes(n)) return toast(`Số ${n} chưa được gọi!`, 'warn');
   state.marked.has(n) ? state.marked.delete(n) : (state.marked.add(n), beep());
   saveCard(); renderBoard();
+  if (supabase && state.name) supabase.from('participants').update({ waiting_lines: linesComplete() }).eq('session_id',sessionId);
 }
 function renderGame() {
   $('latestNumber').textContent = state.current ?? '—';
@@ -139,9 +140,12 @@ $('copyInvite').addEventListener('click', async () => { await navigator.clipboar
 if (role === 'host') { $('hostPanel').hidden = false; $('inviteLink').value = `${location.origin}${location.pathname}?room=${roomCode}`; } else $('hostPanel').hidden = true;
 async function startHostRound() { if (role !== 'host' || new URLSearchParams(location.search).get('new') !== '1') return; await new Promise(resolve => setTimeout(resolve, 350)); if (supabase) { await supabase.from('winners').delete().eq('room_code', roomCode); await supabase.from('chat_messages').delete().eq('room_code', roomCode); await supabase.from('rooms').update({current_number:null,called_numbers:[],round:state.round + 1,updated_at:new Date().toISOString()}).eq('code',roomCode); } else { localStorage.removeItem(demoKey); } toast('Ván mới đã sẵn sàng. Hãy gửi link mời người chơi!','success'); }
 async function joinRoom() { if (!supabase || !state.name) return; await supabase.from('participants').upsert({session_id:sessionId,room_code:roomCode,player_name:state.name,role,last_seen:new Date().toISOString()},{onConflict:'session_id'}); clearInterval(window.bingoHeartbeat); window.bingoHeartbeat=setInterval(()=>supabase.from('participants').update({last_seen:new Date().toISOString()}).eq('session_id',sessionId),20000); }
+function renderPeople(rows) { $('peopleCount').textContent=rows.length; $('peopleList').innerHTML=rows.map(p=>`<div class="person"><span class="avatar">${esc(p.player_name).slice(0,1).toUpperCase()}</span><span><b>${esc(p.player_name)}</b><small>${p.role==='host'?'Người dẫn':p.waiting_lines?`Đợi Bingo · ${p.waiting_lines} hàng`:'Đang chờ số'}</small></span></div>`).join('')||'<p class="empty-winners">Chưa có người chơi nào.</p>'; }
+async function loadPeople() { if(!supabase)return; const cutoff=new Date(Date.now()-70000).toISOString(); const {data}=await supabase.from('participants').select('*').eq('room_code',roomCode).gt('last_seen',cutoff); renderPeople(data||[]); }
+setInterval(loadPeople,10000);
 async function loadRooms() { if (!supabase) return; const cutoff=new Date(Date.now()-70000).toISOString(); const [{data:rooms},{data:people}]=await Promise.all([supabase.from('rooms').select('code,current_number,updated_at').order('updated_at',{ascending:false}).limit(30),supabase.from('participants').select('room_code,last_seen').gt('last_seen',cutoff)]); const counts=(people||[]).reduce((a,p)=>(a[p.room_code]=(a[p.room_code]||0)+1,a),{}); const box=$('roomList'); box.innerHTML=(rooms||[]).map(r=>`<button type="button" class="room-choice" data-room="${r.code}"><b>${r.code}</b><span>${counts[r.code]||0} người · ${r.current_number?'Đang diễn ra':'Đang chờ'}</span></button>`).join('')||'<p>Chưa có phòng nào. Hãy chờ Người dẫn tạo ván.</p>'; box.querySelectorAll('.room-choice').forEach(b=>b.addEventListener('click',()=>{ $('roomInput').value=b.dataset.room; box.querySelectorAll('.room-choice').forEach(x=>x.classList.toggle('selected',x===b)); })); }
 document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',()=>{ const player=r.value==='player'&&r.checked; $('roomChooser').hidden=!player; if(player) loadRooms(); }));
-initRemote(); initChat(); renderGame(); startHostRound(); loadRooms();
+initRemote(); initChat(); renderGame(); startHostRound(); loadRooms(); loadPeople();
 // Role-specific presentation after the welcome form is completed.
 $('joinDialog').addEventListener('close', () => { if (role==='host') { document.body.classList.add('is-host'); $('hostNumbers').hidden=false; $('hostPanel').hidden=false; } else { document.body.classList.remove('is-host'); $('hostNumbers').hidden=true; $('hostPanel').hidden=true; } });
 document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',()=>{ const host=r.value==='host'&&r.checked; $('hostRoomChooser').hidden=!host; }));

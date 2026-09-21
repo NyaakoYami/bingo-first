@@ -16,7 +16,7 @@ create table if not exists winners (
   completed_lines integer not null default 1
 );
 create table if not exists chat_messages (id bigint generated always as identity primary key, room_code text not null references rooms(code) on delete cascade, player_name text not null, message text not null check (char_length(message) between 1 and 240), kind text not null default 'chat', round integer not null default 1, created_at timestamptz not null default now());
-create table if not exists participants (id uuid primary key default gen_random_uuid(), room_code text not null references rooms(code) on delete cascade, session_id text not null unique, player_name text not null, role text not null default 'player', last_seen timestamptz not null default now());
+create table if not exists participants (id uuid primary key default gen_random_uuid(), room_code text not null references rooms(code) on delete cascade, session_id text not null unique, player_name text not null, role text not null default 'player', waiting_lines integer not null default 0, last_seen timestamptz not null default now());
 
 alter table rooms enable row level security;
 alter table winners enable row level security;
